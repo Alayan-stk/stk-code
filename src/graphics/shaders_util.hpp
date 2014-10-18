@@ -507,21 +507,44 @@ protected:
         glUseProgram(0);
     }
 
+    template<int N>
+    void SetTextureUnits_impl()
+    {
+        static_assert(N == sizeof...(tp), "Not enough texture set");
+    }
+
+    template<int N, typename... TexIds>
+    void SetTextureUnits_impl(GLuint texid, TexIds... args)
+    {
+        setTextureSampler(TextureType[N], TextureUnits[N], texid, SamplersId[N]);
+        SetTextureUnits_impl<N + 1>(args...);
+    }
+
+
+    template<int N>
+    void SetTextureHandles_impl()
+    {
+        static_assert(N == sizeof...(tp), "Not enough handle set");
+    }
+
+    template<int N, typename... HandlesId>
+    void SetTextureHandles_impl(uint64_t handle, HandlesId... args)
+    {
+        if (handle)
+            glUniformHandleui64ARB(TextureLocation[N], handle);
+        SetTextureHandles_impl<N + 1>(args...);
+    }
+
 public:
     std::vector<GLuint> SamplersId;
-    void SetTextureUnits(const std::vector<GLuint> &args)
+
+    template<typename... TexIds>
+    void SetTextureUnits(TexIds... args)
     {
-        if (args.size() != sizeof...(tp))
-            abort();
         if (getGLSLVersion() >= 330)
-        {
-            for (unsigned i = 0; i < args.size(); i++)
-            {
-                setTextureSampler(TextureType[i], TextureUnits[i], args[i], SamplersId[i]);
-            }
-        }
-        else
-            BindTexture<tp...>::exec(TextureUnits, args, 0);
+            SetTextureUnits_impl<0>(args...);
+/*        else
+            BindTexture<tp...>::exec(TextureUnits, args, 0);*/
     }
 
     ~TextureRead()
@@ -530,14 +553,10 @@ public:
             glDeleteSamplers(1, &SamplersId[i]);
     }
 
-    void SetTextureHandles(const std::vector<uint64_t> &args)
+    template<typename... HandlesId>
+    void SetTextureHandles(HandlesId... ids)
     {
-        assert(args.size() == TextureLocation.size() && "Wrong Handle count");
-        for (unsigned i = 0; i < args.size(); i++)
-        {
-            if (args[i])
-                glUniformHandleui64ARB(TextureLocation[i], args[i]);
-        }
+        SetTextureHandles_impl<0>(ids...);
     }
 };
 #endif
