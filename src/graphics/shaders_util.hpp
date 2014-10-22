@@ -554,7 +554,7 @@ public:
         if (getGLSLVersion() >= 330)
             SetTextureUnits_impl<0>(args...);
         else
-            BindTexture<tp...>::exec<0>(TextureUnits, args...);
+            BindTexture<tp...>::template exec<0>(TextureUnits, args...);
     }
 
     ~TextureRead()
