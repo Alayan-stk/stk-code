@@ -647,7 +647,7 @@ void IrrDriver::renderSolidSecondPass()
                 uint64_t nulltex[10] = {};
                 if (SolidPassCmd::getInstance()->Size[GrassMat::MaterialType])
                 {
-                    HandleExpander<GrassMat::InstancedSecondPassShader>::template Expand(nulltex, GrassMat::SecondPassTextures, DiffuseHandle, SpecularHandle, SSAOHandle, DepthHandle);
+                    HandleExpander<GrassMat::InstancedSecondPassShader>::Expand(nulltex, GrassMat::SecondPassTextures, DiffuseHandle, SpecularHandle, SSAOHandle, DepthHandle);
                     GrassMat::InstancedSecondPassShader::getInstance()->setUniforms(windDir, cb->getPosition());
                     glMultiDrawElementsIndirect(GL_TRIANGLES, GL_UNSIGNED_SHORT,
                         (const void*)(SolidPassCmd::getInstance()->Offset[GrassMat::MaterialType] * sizeof(DrawElementsIndirectCommand)),
@@ -674,7 +674,7 @@ void IrrDriver::renderSolidSecondPass()
                 for (unsigned i = 0; i < meshes.size(); i++)
                 {
                     GLMesh *mesh = meshes[i];
-                    TexExpander<GrassMat::InstancedSecondPassShader>::template ExpandTex(*mesh, GrassMat::SecondPassTextures, DiffSpecSSAOTex[0], DiffSpecSSAOTex[1], DiffSpecSSAOTex[2], irr_driver->getDepthStencilTexture());
+                    TexExpander<GrassMat::InstancedSecondPassShader>::ExpandTex(*mesh, GrassMat::SecondPassTextures, DiffSpecSSAOTex[0], DiffSpecSSAOTex[1], DiffSpecSSAOTex[2], irr_driver->getDepthStencilTexture());
                     GrassMat::InstancedSecondPassShader::getInstance()->setUniforms(windDir, cb->getPosition());
                     glDrawElementsIndirect(GL_TRIANGLES, GL_UNSIGNED_SHORT, (const void*)((SolidPassCmd::getInstance()->Offset[GrassMat::MaterialType] + i) * sizeof(DrawElementsIndirectCommand)));
                 }
