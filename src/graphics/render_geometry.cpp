@@ -544,10 +544,10 @@ void renderMeshes2ndPass( const std::vector<uint64_t> &Prefilled_Handle,
         }
 
         if (UserConfigParams::m_azdo)
-            HandleExpander<typename T::SecondPassShader>::template Expand(mesh.TextureHandles, T::SecondPassTextures, Prefilled_Handle[0], Prefilled_Handle[1], Prefilled_Handle[2]);
+            HandleExpander<typename T::SecondPassShader>::Expand(mesh.TextureHandles, T::SecondPassTextures, Prefilled_Handle[0], Prefilled_Handle[1], Prefilled_Handle[2]);
         else
-            TexExpander<typename T::SecondPassShader>::template ExpandTex(mesh, T::SecondPassTextures, Prefilled_Tex[0], Prefilled_Tex[1], Prefilled_Tex[2]);
-        custom_unroll_args<List...>::template exec(T::SecondPassShader::getInstance(), meshes.at(i));
+            TexExpander<typename T::SecondPassShader>::ExpandTex(mesh, T::SecondPassTextures, Prefilled_Tex[0], Prefilled_Tex[1], Prefilled_Tex[2]);
+        custom_unroll_args<List...>::exec(T::SecondPassShader::getInstance(), meshes.at(i));
     }
 }
 
@@ -560,7 +560,7 @@ void renderInstancedMeshes2ndPass(const std::vector<GLuint> &Prefilled_tex, Args
     for (unsigned i = 0; i < meshes.size(); i++)
     {
         GLMesh *mesh = meshes[i];
-        TexExpander<typename T::InstancedSecondPassShader>::template ExpandTex(*mesh, T::SecondPassTextures, Prefilled_tex[0], Prefilled_tex[1], Prefilled_tex[2]);
+        TexExpander<typename T::InstancedSecondPassShader>::ExpandTex(*mesh, T::SecondPassTextures, Prefilled_tex[0], Prefilled_tex[1], Prefilled_tex[2]);
         T::InstancedSecondPassShader::getInstance()->setUniforms(args...);
         glDrawElementsIndirect(GL_TRIANGLES, GL_UNSIGNED_SHORT, (const void*)((SolidPassCmd::getInstance()->Offset[T::MaterialType] + i) * sizeof(DrawElementsIndirectCommand)));
     }
@@ -575,7 +575,7 @@ void multidraw2ndPass(const std::vector<uint64_t> &Handles, Args... args)
     uint64_t nulltex[10] = {};
     if (SolidPassCmd::getInstance()->Size[T::MaterialType])
     {
-        HandleExpander<typename T::InstancedSecondPassShader>::template Expand(nulltex, T::SecondPassTextures, Handles[0], Handles[1], Handles[2]);
+        HandleExpander<typename T::InstancedSecondPassShader>::Expand(nulltex, T::SecondPassTextures, Handles[0], Handles[1], Handles[2]);
         T::InstancedSecondPassShader::getInstance()->setUniforms(args...);
         glMultiDrawElementsIndirect(GL_TRIANGLES, GL_UNSIGNED_SHORT,
             (const void*)(SolidPassCmd::getInstance()->Offset[T::MaterialType] * sizeof(DrawElementsIndirectCommand)),
@@ -647,7 +647,7 @@ void IrrDriver::renderSolidSecondPass()
                 uint64_t nulltex[10] = {};
                 if (SolidPassCmd::getInstance()->Size[GrassMat::MaterialType])
                 {
-                    HandleExpander<GrassMat::InstancedSecondPassShader>::template Expand(nulltex, GrassMat::SecondPassTextures, DiffuseHandle, SpecularHandle, SSAOHandle, DepthHandle);
+                    HandleExpander<GrassMat::InstancedSecondPassShader>::Expand(nulltex, GrassMat::SecondPassTextures, DiffuseHandle, SpecularHandle, SSAOHandle, DepthHandle);
                     GrassMat::InstancedSecondPassShader::getInstance()->setUniforms(windDir, cb->getPosition());
                     glMultiDrawElementsIndirect(GL_TRIANGLES, GL_UNSIGNED_SHORT,
                         (const void*)(SolidPassCmd::getInstance()->Offset[GrassMat::MaterialType] * sizeof(DrawElementsIndirectCommand)),
@@ -674,7 +674,7 @@ void IrrDriver::renderSolidSecondPass()
                 for (unsigned i = 0; i < meshes.size(); i++)
                 {
                     GLMesh *mesh = meshes[i];
-                    TexExpander<GrassMat::InstancedSecondPassShader>::template ExpandTex(*mesh, GrassMat::SecondPassTextures, DiffSpecSSAOTex[0], DiffSpecSSAOTex[1], DiffSpecSSAOTex[2], irr_driver->getDepthStencilTexture());
+                    TexExpander<GrassMat::InstancedSecondPassShader>::ExpandTex(*mesh, GrassMat::SecondPassTextures, DiffSpecSSAOTex[0], DiffSpecSSAOTex[1], DiffSpecSSAOTex[2], irr_driver->getDepthStencilTexture());
                     GrassMat::InstancedSecondPassShader::getInstance()->setUniforms(windDir, cb->getPosition());
                     glDrawElementsIndirect(GL_TRIANGLES, GL_UNSIGNED_SHORT, (const void*)((SolidPassCmd::getInstance()->Offset[GrassMat::MaterialType] + i) * sizeof(DrawElementsIndirectCommand)));
                 }
@@ -754,7 +754,7 @@ void renderTransparenPass(const std::vector<TexUnit> &TexUnits, std::vector<STK:
             Shader::getInstance()->SetTextureHandles(Handles[0]);
         else
             Shader::getInstance()->SetTextureUnits(getTextureGLuint(mesh.textures[0]));
-        custom_unroll_args<List...>::template exec(Shader::getInstance(), meshes->at(i));
+        custom_unroll_args<List...>::exec(Shader::getInstance(), meshes->at(i));
     }
 }
 
@@ -931,9 +931,9 @@ void renderShadow(unsigned cascade)
         if (!irr_driver->hasARB_base_instance())
             glBindVertexArray(mesh->vao);
         if (UserConfigParams::m_azdo)
-            HandleExpander<typename T::ShadowPassShader>::template Expand(mesh->TextureHandles, T::ShadowTextures);
+            HandleExpander<typename T::ShadowPassShader>::Expand(mesh->TextureHandles, T::ShadowTextures);
         else
-            TexExpander<typename T::ShadowPassShader>::template ExpandTex(*mesh, T::ShadowTextures);
+            TexExpander<typename T::ShadowPassShader>::ExpandTex(*mesh, T::ShadowTextures);
         shadow_custom_unroll_args<List...>::template exec<typename T::ShadowPassShader>(T::ShadowPassShader::getInstance(), cascade, t.at(i));
     }
 }
@@ -948,7 +948,7 @@ void renderInstancedShadow(unsigned cascade, Args ...args)
     {
         GLMesh *mesh = t[i];
 
-        TexExpander<typename T::InstancedShadowPassShader>::template ExpandTex(*mesh, T::ShadowTextures);
+        TexExpander<typename T::InstancedShadowPassShader>::ExpandTex(*mesh, T::ShadowTextures);
         T::InstancedShadowPassShader::getInstance()->setUniforms(cascade, args...);
         size_t tmp = ShadowPassCmd::getInstance()->Offset[cascade][T::MaterialType] + i;
         glDrawElementsIndirect(GL_TRIANGLES, GL_UNSIGNED_SHORT, (const void*)((tmp) * sizeof(DrawElementsIndirectCommand)));
@@ -1061,9 +1061,9 @@ void drawRSM(const core::matrix4 & rsm_matrix)
         if (!irr_driver->hasARB_base_instance())
             glBindVertexArray(mesh->vao);
         if (UserConfigParams::m_azdo)
-            HandleExpander<typename T::RSMShader>::template Expand(mesh->TextureHandles, T::RSMTextures);
+            HandleExpander<typename T::RSMShader>::Expand(mesh->TextureHandles, T::RSMTextures);
         else
-            TexExpander<typename T::RSMShader>::template ExpandTex(*mesh, T::RSMTextures);
+            TexExpander<typename T::RSMShader>::ExpandTex(*mesh, T::RSMTextures);
         rsm_custom_unroll_args<Selector...>::template exec<typename T::RSMShader>(rsm_matrix, t.at(i));
     }
 }
@@ -1079,7 +1079,7 @@ void renderRSMShadow(Args ...args)
         std::vector<GLuint> Textures;
         GLMesh *mesh = t[i];
 
-        TexExpander<typename T::InstancedRSMShader>::template ExpandTex(*mesh, T::RSMTextures);
+        TexExpander<typename T::InstancedRSMShader>::ExpandTex(*mesh, T::RSMTextures);
         T::InstancedRSMShader::getInstance()->setUniforms(args...);
         glDrawElementsIndirect(GL_TRIANGLES, GL_UNSIGNED_SHORT, (const void*)((RSMPassCmd::getInstance()->Offset[T::MaterialType] + i)* sizeof(DrawElementsIndirectCommand)));
     }
