@@ -643,6 +643,7 @@ core::matrix4 getTighestFitOrthoProj(const core::matrix4 &transform, const std::
 }
 
 float shadowSplit[5] = {1., 5., 20., 50., 150 };
+float tmpshadowSplit[5] = { 1., 5., 20., 50., 150. };
 
 struct CascadeBoundingBox
 {
@@ -659,6 +660,19 @@ CascadeBoundingBox *CBB[2];
 static GLsync LightcoordBBFence = 0;
 size_t currentCBB = 0;
 
+struct Histogram
+{
+    int bin[1024];
+    int mindepth;
+    int maxdepth;
+    int count;
+};
+
+static GLuint ssboSplit[2];
+Histogram *Hist[2];
+size_t currentHist = 0;
+
+
 void IrrDriver::computeCameraMatrix(scene::ICameraSceneNode * const camnode, size_t width, size_t height)
 {
     if (!LightcoordBBFence)
@@ -670,28 +684,86 @@ void IrrDriver::computeCameraMatrix(scene::ICameraSceneNode * const camnode, siz
         glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo[1]);
         glBufferStorage(GL_SHADER_STORAGE_BUFFER, 4 * sizeof(CascadeBoundingBox), 0, GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT | GL_MAP_READ_BIT | GL_MAP_WRITE_BIT);
         CBB[1] = (CascadeBoundingBox *)glMapBufferRange(GL_SHADER_STORAGE_BUFFER, 0, 4 * sizeof(CascadeBoundingBox), GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT | GL_MAP_READ_BIT | GL_MAP_WRITE_BIT);
-    }
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, ssbo[currentCBB]);
-    for (unsigned i = 0; i < 4; i++)
-    {
-        CBB[currentCBB][i].xmin = CBB[currentCBB][i].ymin = CBB[currentCBB][i].zmin = 1000;
-        CBB[currentCBB][i].xmax = CBB[currentCBB][i].ymax = CBB[currentCBB][i].zmax = -1000;
-    }
-    glMemoryBarrier(GL_BUFFER_UPDATE_BARRIER_BIT);
-    glUseProgram(FullScreenShader::LightspaceBoundingBoxShader::getInstance()->Program);
-    FullScreenShader::LightspaceBoundingBoxShader::getInstance()->SetTextureUnits(getDepthStencilTexture());
-    FullScreenShader::LightspaceBoundingBoxShader::getInstance()->setUniforms(m_suncam->getViewMatrix(), shadowSplit[1], shadowSplit[2], shadowSplit[3], shadowSplit[4]);
-    glDispatchCompute((int)width / 8, (int)height / 8, 1);
 
-    glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
-    GLsync newLightcoordBBFence = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
+        glGenBuffers(2, ssboSplit);
+        glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssboSplit[0]);
+        glBufferStorage(GL_SHADER_STORAGE_BUFFER, sizeof(Histogram), 0, GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT | GL_MAP_READ_BIT | GL_MAP_WRITE_BIT);
+        Hist[0] = (Histogram *)glMapBufferRange(GL_SHADER_STORAGE_BUFFER, 0, sizeof(Histogram), GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT | GL_MAP_READ_BIT | GL_MAP_WRITE_BIT);
+        glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssboSplit[1]);
+        glBufferStorage(GL_SHADER_STORAGE_BUFFER, sizeof(Histogram), 0, GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT | GL_MAP_READ_BIT | GL_MAP_WRITE_BIT);
+        Hist[1] = (Histogram *)glMapBufferRange(GL_SHADER_STORAGE_BUFFER, 0, sizeof(Histogram), GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT | GL_MAP_READ_BIT | GL_MAP_WRITE_BIT);
+    }
+
     // Use bounding boxes from last frame
     if (LightcoordBBFence)
     {
         while (glClientWaitSync(LightcoordBBFence, GL_SYNC_FLUSH_COMMANDS_BIT, 0) != GL_ALREADY_SIGNALED);
         glDeleteSync(LightcoordBBFence);
     }
-    LightcoordBBFence = newLightcoordBBFence;
+
+    {
+        memcpy(shadowSplit, tmpshadowSplit, 5 * sizeof(float));
+//        currentHist = (currentHist + 1) % 2;
+        unsigned numpix = Hist[currentHist]->count;
+        printf("numpix is %d\n", numpix);
+        unsigned split = 0;
+        unsigned i;
+        for (i = 0; i < 1022; i++)
+        {
+            split += Hist[currentHist]->bin[i];
+            if (split > numpix / 4)
+                break;
+        }
+        tmpshadowSplit[1] = (float)++i;
+        printf("pixel cnt : %d\n", i);
+        split = 0;
+        for (; i < 1023; i++)
+        {
+            split += Hist[currentHist]->bin[i];
+            if (split > numpix / 4)
+                break;
+        }
+        tmpshadowSplit[2] = (float)++i;
+        printf("pixel cnt : %d\n", i);
+
+        split = 0;
+        for (; i < 1024; i++)
+        {
+            split += Hist[currentHist]->bin[i];
+            if (split > numpix / 4)
+                break;
+        }
+        tmpshadowSplit[3] = (float)++i;
+        printf("pixel cnt : %d\n", i);
+        tmpshadowSplit[0] = (float)Hist[currentHist]->bin[1024] - 1;
+        tmpshadowSplit[4] = (float)Hist[currentHist]->bin[1025] + 1;
+        printf("min %f max %f\n", tmpshadowSplit[0], tmpshadowSplit[4]);
+        currentHist = (currentHist + 1) % 2;
+    }
+
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, ssbo[currentCBB]);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, ssboSplit[currentHist]);
+    for (unsigned i = 0; i < 4; i++)
+    {
+        CBB[currentCBB][i].xmin = CBB[currentCBB][i].ymin = CBB[currentCBB][i].zmin = 1000;
+        CBB[currentCBB][i].xmax = CBB[currentCBB][i].ymax = CBB[currentCBB][i].zmax = -1000;
+    }
+    memset(Hist[currentHist], 0, sizeof(Histogram));
+    Hist[currentHist]->mindepth = 3000;
+    glMemoryBarrier(GL_BUFFER_UPDATE_BARRIER_BIT);
+    glUseProgram(FullScreenShader::LightspaceBoundingBoxShader::getInstance()->Program);
+    FullScreenShader::LightspaceBoundingBoxShader::getInstance()->SetTextureUnits(getDepthStencilTexture());
+    FullScreenShader::LightspaceBoundingBoxShader::getInstance()->setUniforms(m_suncam->getViewMatrix(), tmpshadowSplit[1], tmpshadowSplit[2], tmpshadowSplit[3], tmpshadowSplit[4]);
+    glDispatchCompute((int)width / 8, (int)height / 8, 1);
+
+    glUseProgram(FullScreenShader::DepthHistogramShader::getInstance()->Program);
+    FullScreenShader::DepthHistogramShader::getInstance()->SetTextureUnits(getDepthStencilTexture());
+    FullScreenShader::DepthHistogramShader::getInstance()->setUniforms();
+    glDispatchCompute((int)width / 8, (int)height / 8, 1);
+
+    glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+    LightcoordBBFence = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
+
     currentCBB = (currentCBB + 1) % 2;
 
     static_cast<scene::CSceneManager *>(m_scene_manager)->OnAnimate(os::Timer::getTime());
@@ -747,9 +819,9 @@ void IrrDriver::computeCameraMatrix(scene::ICameraSceneNode * const camnode, siz
         // Build the 3 ortho projection (for the 3 shadow resolution levels)
         for (unsigned i = 0; i < 4; i++)
         {
-            camnode->setFarValue(FarValues[i]);
-            camnode->setNearValue(NearValues[i]);
-            camnode->render();
+//            camnode->setFarValue(FarValues[i]);
+//            camnode->setNearValue(NearValues[i]);
+//            camnode->render();
             const scene::SViewFrustum *frustrum = camnode->getViewFrustum();
             float tmp[24] = {
                 frustrum->getFarLeftDown().X,
