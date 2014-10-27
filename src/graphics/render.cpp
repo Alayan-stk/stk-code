@@ -644,8 +644,56 @@ core::matrix4 getTighestFitOrthoProj(const core::matrix4 &transform, const std::
 
 float shadowSplit[5] = {1., 5., 20., 50., 150 };
 
+struct CascadeBoundingBox
+{
+    int xmin;
+    int xmax;
+    int ymin;
+    int ymax;
+    int zmin;
+    int zmax;
+};
+
+static GLuint ssbo[2];
+CascadeBoundingBox *CBB[2];
+static GLsync LightcoordBBFence = 0;
+size_t currentCBB = 0;
+
 void IrrDriver::computeCameraMatrix(scene::ICameraSceneNode * const camnode, size_t width, size_t height)
 {
+    if (!LightcoordBBFence)
+    {
+        glGenBuffers(2, ssbo);
+        glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo[0]);
+        glBufferStorage(GL_SHADER_STORAGE_BUFFER, 4 * sizeof(CascadeBoundingBox), 0, GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT | GL_MAP_READ_BIT | GL_MAP_WRITE_BIT);
+        CBB[0] = (CascadeBoundingBox *)glMapBufferRange(GL_SHADER_STORAGE_BUFFER, 0, 4 * sizeof(CascadeBoundingBox), GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT | GL_MAP_READ_BIT | GL_MAP_WRITE_BIT);
+        glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo[1]);
+        glBufferStorage(GL_SHADER_STORAGE_BUFFER, 4 * sizeof(CascadeBoundingBox), 0, GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT | GL_MAP_READ_BIT | GL_MAP_WRITE_BIT);
+        CBB[1] = (CascadeBoundingBox *)glMapBufferRange(GL_SHADER_STORAGE_BUFFER, 0, 4 * sizeof(CascadeBoundingBox), GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT | GL_MAP_READ_BIT | GL_MAP_WRITE_BIT);
+    }
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, ssbo[currentCBB]);
+    for (unsigned i = 0; i < 4; i++)
+    {
+        CBB[currentCBB][i].xmin = CBB[currentCBB][i].ymin = CBB[currentCBB][i].zmin = 1000;
+        CBB[currentCBB][i].xmax = CBB[currentCBB][i].ymax = CBB[currentCBB][i].zmax = -1000;
+    }
+    glMemoryBarrier(GL_BUFFER_UPDATE_BARRIER_BIT);
+    glUseProgram(FullScreenShader::LightspaceBoundingBoxShader::getInstance()->Program);
+    FullScreenShader::LightspaceBoundingBoxShader::getInstance()->SetTextureUnits(getDepthStencilTexture());
+    FullScreenShader::LightspaceBoundingBoxShader::getInstance()->setUniforms(m_suncam->getViewMatrix(), shadowSplit[1], shadowSplit[2], shadowSplit[3], shadowSplit[4]);
+    glDispatchCompute((int)width / 8, (int)height / 8, 1);
+
+    glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+    GLsync newLightcoordBBFence = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
+    // Use bounding boxes from last frame
+    if (LightcoordBBFence)
+    {
+        while (glClientWaitSync(LightcoordBBFence, GL_SYNC_FLUSH_COMMANDS_BIT, 0) != GL_ALREADY_SIGNALED);
+        glDeleteSync(LightcoordBBFence);
+    }
+    LightcoordBBFence = newLightcoordBBFence;
+    currentCBB = (currentCBB + 1) % 2;
+
     static_cast<scene::CSceneManager *>(m_scene_manager)->OnAnimate(os::Timer::getTime());
     camnode->render();
     irr_driver->setProjMatrix(irr_driver->getVideoDriver()->getTransform(video::ETS_PROJECTION));
@@ -762,7 +810,19 @@ void IrrDriver::computeCameraMatrix(scene::ICameraSceneNode * const camnode, siz
             const float units_per_w = w / 1024;
             const float units_per_h = h / 1024;*/
 
-            m_shadow_camnodes[i]->setProjectionMatrix(getTighestFitOrthoProj(SunCamViewMatrix, vectors) , true);
+            float left = CBB[currentCBB][i].xmin - 1;
+            float right = CBB[currentCBB][i].xmax + 1;
+            float up = CBB[currentCBB][i].ymin - 1;
+            float down = CBB[currentCBB][i].ymax + 1;
+
+            core::matrix4 tmp_matrix;
+            // Prevent Matrix without extend
+            if (left != right && up != down)
+                tmp_matrix.buildProjectionMatrixOrthoLH(left, right,
+                up, down,
+                30, CBB[currentCBB][i].zmax + 1);
+
+            m_shadow_camnodes[i]->setProjectionMatrix(tmp_matrix , true);
             m_shadow_camnodes[i]->render();
 
             sun_ortho_matrix.push_back(getVideoDriver()->getTransform(video::ETS_PROJECTION) * getVideoDriver()->getTransform(video::ETS_VIEW));
