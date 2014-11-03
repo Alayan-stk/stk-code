@@ -46,11 +46,12 @@ class XMLNode;
  *  you get less advantageous items (but no useless ones either, e.g. anchor),
  *  while as the last you get more useful ones.
  *  The weight distribution works as follow:
- *  The position in a race is mapped to one of five position classes:
- *  first, top, middle, bottom, last - e.g. for a 6 player game the distribution
- *  is:
- *  position  1     2   3      4      5      6
- *  class     first top middle middle bottom last
+ *  The position in a race is mapped to one of six position classes:
+ *  first, top, middle-top, middle-bottom, bottom, last - e.g. for a 7 player
+ *  game the distribution is:
+ *  position  1     2   3          4          5             6      7
+ *  class     first top middle-top middle-top middle-bottom bottom last
+ *
  *  For each class the weight distribution is read in from powerup.xml:
  *   <!--      bubble cake bowl zipper plunger switch para anvil -->
  *   <last  w="0      1    1    2      2       0      2    2"     />
@@ -91,9 +92,10 @@ public:
      *  as used for normal racing can be used to define which items are
      *  available in battle mode*/
     enum PositionClass {POSITION_FIRST,
-                        POSITION_TOP33,
-                        POSITION_MID33,
-                        POSITION_END33,
+                        POSITION_TOP25,
+                        POSITION_MIDTOP25,
+                        POSITION_MIDEND25,
+                        POSITION_END25,
                         POSITION_LAST,
                         POSITION_BATTLE_MODE,
                         POSITION_TUTORIAL_MODE,
