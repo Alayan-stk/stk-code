@@ -130,13 +130,14 @@ void PowerupManager::loadAllPowerups()
             exit(-1);
         }
     }
-    loadWeights(*root, "first",   POSITION_FIRST      );
-    loadWeights(*root, "top33",   POSITION_TOP33      );
-    loadWeights(*root, "mid33",   POSITION_MID33      );
-    loadWeights(*root, "end33",   POSITION_END33      );
-    loadWeights(*root, "last" ,   POSITION_LAST       );
-    loadWeights(*root, "battle" , POSITION_BATTLE_MODE);
-    loadWeights(*root, "tuto",    POSITION_TUTORIAL_MODE);
+    loadWeights(*root, "first",    POSITION_FIRST      );
+    loadWeights(*root, "top25",    POSITION_TOP25      );
+    loadWeights(*root, "midtop25", POSITION_MIDTOP25   );
+    loadWeights(*root, "midend25", POSITION_MIDEND25   );
+    loadWeights(*root, "end25",    POSITION_END33      );
+    loadWeights(*root, "last" ,    POSITION_LAST       );
+    loadWeights(*root, "battle" ,  POSITION_BATTLE_MODE);
+    loadWeights(*root, "tuto",     POSITION_TUTORIAL_MODE);
 
     delete root;
 
@@ -299,7 +300,7 @@ void PowerupManager::updateWeightsForRace(unsigned int num_karts)
             if(w!=0 && num_karts > 4 &&
                  (type==POWERUP_PARACHUTE || type==POWERUP_SWITCH) )
             {
-                w = w / (num_karts-4);
+                w = w / (num_karts/4);
                 if(w==0) w=1;
             }
             for(unsigned int j=0; j<w; j++)
@@ -326,16 +327,20 @@ PowerupManager::PositionClass
     if(position==1)         return POSITION_FIRST;
     if(position==num_karts) return POSITION_LAST;
 
-    // Now num_karts must be >2, since position <=num_players
+    // Now num_karts must be >=3, since position <=num_players
 
-    unsigned int third = (unsigned int)floor((float)(num_karts-1)/3.0f);
-    // 1 < Position <= 1+third is top33
-    if(position <= 1 + third) return POSITION_TOP33;
+    unsigned int quarter = (unsigned int)floor((float)(num_karts-2)/4.0f);
+    unsigned int half = (unsigned int)floor((float)(num_karts-2)/2.0f);
+    // 1 < Position <= 1+quarter is top25
+    if(position <= 1 + quarter) return POSITION_TOP25;
 
-    // num_players-third < position is end33
-    if(num_karts - third <= position) return POSITION_END33;
+    // num_players-quarter < position < last is end25
+    if(num_karts - quarter <= position) return POSITION_END25;
 
-    return POSITION_MID33;
+    //1+quarter < Position <= 1+half is midtop25
+    if(position <= 1 + half) return POSITION_MIDTOP25;
+    
+    return POSITION_MIDEND25;
 }   // convertPositionToClass
 
 // ----------------------------------------------------------------------------
