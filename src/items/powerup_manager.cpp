@@ -330,17 +330,18 @@ PowerupManager::PositionClass
     // Now num_karts must be >=3, since position <=num_players
 
     unsigned int quarter = (unsigned int)floor((float)(num_karts-2)/4.0f);
+    unsigned int quarter_b = (unsigned int)floor((float)(num_karts-1)/4.0f);
     unsigned int half = (unsigned int)floor((float)(num_karts-2)/2.0f);
     // 1 < Position <= 1+quarter is top25
     if(position <= 1 + quarter) return POSITION_TOP25;
 
-    // num_players-quarter < position < last is end25
-    if(num_karts - quarter <= position) return POSITION_END25;
+    // num_players-quarter <= position < last is end25
+    if(num_karts - quarter_b <= position) return POSITION_END25;
 
     //1+quarter < Position <= 1+half is midtop25
     if(position <= 1 + half) return POSITION_MIDTOP25;
     
-    return POSITION_MIDEND25;
+    return POSITION_END25;
 }   // convertPositionToClass
 
 // ----------------------------------------------------------------------------
