@@ -75,8 +75,8 @@
         max-distance="25"                               />
 
   <!-- Distribution of the items depending on position of the 
-       kart (first kart, top 33%, middle 33%, bottom 33% (but
-       not last), last kart. i
+       kart (first kart, top 25%, middle top 25%, middle bottom 25%,
+       bottom 25%, last kart. 25% are done excluding first and last
        The order of items must correspond to powerup_manager.hpp.
        The first line (w=...) corresponds to the weights of 
        getting a single item, the second line (w-multi) to 
