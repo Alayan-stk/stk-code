@@ -134,7 +134,7 @@ void PowerupManager::loadAllPowerups()
     loadWeights(*root, "top25",    POSITION_TOP25      );
     loadWeights(*root, "midtop25", POSITION_MIDTOP25   );
     loadWeights(*root, "midend25", POSITION_MIDEND25   );
-    loadWeights(*root, "end25",    POSITION_END33      );
+    loadWeights(*root, "end25",    POSITION_END25      );
     loadWeights(*root, "last" ,    POSITION_LAST       );
     loadWeights(*root, "battle" ,  POSITION_BATTLE_MODE);
     loadWeights(*root, "tuto",     POSITION_TUTORIAL_MODE);
