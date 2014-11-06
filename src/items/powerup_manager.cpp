@@ -108,8 +108,9 @@ PowerupManager::PowerupType
 
 //-----------------------------------------------------------------------------
 /** Loads all powerups from the powerup.xml file.
+ *  Uses num_karts to get the good weights
  */
-void PowerupManager::loadAllPowerups()
+void PowerupManager::loadAllPowerups(unsigned int num_karts=10)
 {
     const std::string file_name = file_manager->getAsset("powerup.xml");
     XMLNode *root               = file_manager->createXMLTree(file_name);
@@ -130,14 +131,14 @@ void PowerupManager::loadAllPowerups()
             exit(-1);
         }
     }
-    loadWeights(*root, "first",    POSITION_FIRST      );
-    loadWeights(*root, "top25",    POSITION_TOP25      );
-    loadWeights(*root, "midtop25", POSITION_MIDTOP25   );
-    loadWeights(*root, "midend25", POSITION_MIDEND25   );
-    loadWeights(*root, "end25",    POSITION_END25      );
-    loadWeights(*root, "last" ,    POSITION_LAST       );
-    loadWeights(*root, "battle" ,  POSITION_BATTLE_MODE);
-    loadWeights(*root, "tuto",     POSITION_TUTORIAL_MODE);
+    loadWeights(*root, num_karts, "first",    POSITION_FIRST      );
+    loadWeights(*root, num_karts, "top25",    POSITION_TOP25      );
+    loadWeights(*root, num_karts, "midtop25", POSITION_MIDTOP25   );
+    loadWeights(*root, num_karts, "midend25", POSITION_MIDEND25   );
+    loadWeights(*root, num_karts, "end25",    POSITION_END25      );
+    loadWeights(*root, num_karts, "last" ,    POSITION_LAST       );
+    loadWeights(*root, num_karts, "battle" ,  POSITION_BATTLE_MODE);
+    loadWeights(*root, num_karts, "tuto",     POSITION_TUTORIAL_MODE);
 
     delete root;
 
@@ -212,6 +213,7 @@ void PowerupManager::LoadPowerup(PowerupType type, const XMLNode &node)
  *  \param position_class The class for which the weights are read.
  */
 void PowerupManager::loadWeights(const XMLNode &root,
+                                 unsigned int num_karts, 
                                  const std::string &class_name,
                                  PositionClass position_class)
 {
