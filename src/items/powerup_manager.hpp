@@ -144,6 +144,7 @@ private:
     PowerupType   getPowerupType(const std::string &name) const;
 
     void          loadWeights(const XMLNode &root,
+                              unsigned int num_karts,
                               const std::string &class_name,
                               PositionClass position_class);
     PositionClass convertPositionToClass(unsigned int num_karts,
@@ -151,7 +152,7 @@ private:
 public:
                   PowerupManager  ();
                  ~PowerupManager  ();
-    void          loadAllPowerups ();
+    void          loadAllPowerups (unsigned int num_karts=10);
     void          unloadPowerups  ();
     void          LoadPowerup     (PowerupType type, const XMLNode &node);
     void          updateWeightsForRace(unsigned int num_karts);
