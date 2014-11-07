@@ -217,10 +217,32 @@ void PowerupManager::loadWeights(const XMLNode &root,
                                  const std::string &class_name,
                                  PositionClass position_class)
 {
-    const XMLNode *node = root.getNode(class_name);
-    std::string s(""), s_multi("");
-    if(node) node->get("w",       &s      );
-    if(node) node->get("w-multi", &s_multi);
+    const XMLNode *node = root.getNode(class_name), *node2;
+    std::string s(""), s_multi(""), k;
+    std::string w("w"), w_multi("w-multi"), w_add("");
+    
+    /** Adds to w the suffixe of the num_karts_class 
+     *  associated with num_karts
+     */
+    if(position_class!=POSITION_BATTLE_MODE 
+    && position_class!=POSITION_TUTORIAL_MODE)
+    {
+        node2 = root.getNode("range_kart");
+        k = StringUtils::toString(num_karts);
+        k = "k" + k;//Xml nodes can't start with a number
+        //k now contains XML attributes containing kart number class
+        if(node2) node2->get(k, &w_add);
+        if(!node2)
+        {
+            Log::error("[PowerupManager]","No class of weights found"
+                       "for %d karts - probabilities will be incorrect",
+                       num_karts)
+        }
+        w = w + w_add;
+    }//w is changed to associate with an arbitrary class of kart numbers
+    
+    if(node) node->get(w,       &s      );
+    if(node) node->get(w_multi, &s_multi);
 
     if(!node || s=="" || s_multi=="")
     {
