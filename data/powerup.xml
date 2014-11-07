@@ -74,38 +74,114 @@
         force-updown="35"     force-to-target="15"
         max-distance="25"                               />
 
-  <!-- Distribution of the items depending on position of the 
+    <!-- The number of karts is associated in range_kart to a category
+       which will decide the weights for the various items.
+       The category assigned to a number of kart can be changed and
+	   new categories can be created provided they use the same
+	   syntax. wd use defaults settings from 0.8.1 converted to
+	   six divisions.
+       This doesn't apply to battle & tutorial weights
+       If the max karts number is increased, think to add values for
+	   higher kart numbers. Otherwhise, it will default to value for 20. -->
+  <range_kart k1="1" k2="1" k3="1" k4="1" k5="2" k6="2" k7="2" k8="3" k9="3"
+              k10="3" k11="3" k12="4" k13="4" k14="4" k15="4" k16="5" k17="5"
+			  k18="5" k19="5" k20="5"                    />
+    <!-- Distribution of the items depending on position of the 
        kart (first kart, top 25%, middle top 25%, middle bottom 25%,
        bottom 25%, last kart. 25% are done excluding first and last
        The order of items must correspond to powerup_manager.hpp.
        The first line (w=...) corresponds to the weights of 
        getting a single item, the second line (w-multi) to 
        getting three identical items instead of just a single one.
-       E.g. as the first kart, you have 3/8 of a chance to get
-       a single bubble gum, 1/8 to get a bowling ball or switch,
-       and 3/8 to get a triple bubble gum.
+	   The probability to get an item is its weight divided by
+	   sum of weights of all items. It is recommanded to keep that
+	   sum equal to 100 to easily keep track of probabilities.
        'Global' items which affect all karts (switch) should
        be quite rare, since otherwise the item might be used
        too often (compared with many items which will only
        affect a karts or two).                                -->
   <!--      bubble  cake  bowl  zipper  plunger  switch swattr rubber para  anvil -->
-  <first  w="   30     5    20     0      15       10      10     0     0     0"
-    w-multi="    0     0     0     0       0        0       0     0     0     0"    />
-  <top25  w="   20    10    15    16      14        5       5    10     5     0"
-    w-multi="    0     0    10     0      10        0       0     0     0     0"    />
-  <midtop25 w=" 15    12    15    20      11        3       8     8     8     0"
-    w-multi="    0     0    20    20      20        0       0     0     0     0"    />
-  <midend25 w=" 10    15    12    25       8        2       8     8    12     0"
-    w-multi="    0     0    25    30      30        0       0     0     0     0"    />
-  <end25  w="    5    15    10    30       8        2       8     8    14     0"
-    w-multi="    0     0    30    45      30        0       0     0     0     0"    />
-  <last   w="    0    15     5    50       5        0       0     5    20     0"
-    w-multi="    0     0    40    70      60        0       0     0     0     0"    />
-  <battle w="   10    30    60     0       0       10      30     0     0     0"
-    w-multi="    0     0     5     0       0        0       0     0     0     0"    />
-  <tuto   w="    0     0     0     0       0        0       0     0     0     0"
-    w-multi="    0     0   100     0       0        0       0     0     0     0"    />
+  <first  w1="   30     5    20     0      15       10      10     0     0     0"
+    w-multi1="    0     0     0     0       0        0       0     0     0     0" 
+          w2="   30     5    20     0      15       10      10     0     0     0"
+    w-multi2="    0     0     0     0       0        0       0     0     0     0"
+          w3="   30     5    20     0      15       10      10     0     0     0"
+    w-multi3="    0     0     0     0       0        0       0     0     0     0" 
+          w4="   30     5    20     0      15       10      10     0     0     0"
+    w-multi4="    0     0     0     0       0        0       0     0     0     0" 
+          w5="   33     5    25     0      20        5      12     0     0     0"
+    w-multi5="    0     0     0     0       0        0       0     0     0     0" 
+          wd="   30     5    20     0      15       10      10     0     0     0"
+    w-multid="    0     0     0     0       0        0       0     0     0     0"  	/>
+    
+  <top25  w1="   30     5    20     0      15       10      10     0     0     0"
+    w-multi1="    0     0     0     0       0        0       0     0     0     0" 
+          w2="   30     5    20     0      15       10      10     0     0     0"
+    w-multi2="    0     0     0     0       0        0       0     0     0     0"
+          w3="   30     5    20     0      15       10      10     0     0     0"
+    w-multi3="    0     0     0     0       0        0       0     0     0     0" 
+          w4="   30     5    20     0      15       10      10     0     0     0"
+    w-multi4="    0     0     0     0       0        0       0     0     0     0" 
+          w5="   24    10    20    18      16        2       8     2     0     0"
+    w-multi5="    0     0     0     0       0        0       0     0     0     0" 
+          wd="   30     5    20     0      15       10      10     0     0     0"
+    w-multid="    0     0     0     0       0        0       0     0     0     0"    />
+    
+  <midtop25 w1=" 30     5    20     0      15       10      10     0     0     0"
+    w-multi1="    0     0     0     0       0        0       0     0     0     0" 
+          w2="   30     5    20     0      15       10      10     0     0     0"
+    w-multi2="    0     0     0     0       0        0       0     0     0     0"
+          w3="   30     5    20     0      15       10      10     0     0     0"
+    w-multi3="    0     0     0     0       0        0       0     0     0     0" 
+          w4="   30     5    20     0      15       10      10     0     0     0"
+    w-multi4="    0     0     0     0       0        0       0     0     0     0" 
+          w5="   16    12    15    27      20        1       6     2     1     0"
+    w-multi5="    0     0     0     0       0        0       0     0     0     0" 
+          wd="   30     5    20     0      15       10      10     0     0     0"
+    w-multid="    0     0     0     0       0        0       0     0     0     0"    />
+    
+  <midend25 w1=" 30     5    20     0      15       10      10     0     0     0"
+    w-multi1="    0     0     0     0       0        0       0     0     0     0" 
+          w2="   30     5    20     0      15       10      10     0     0     0"
+    w-multi2="    0     0     0     0       0        0       0     0     0     0"
+          w3="   30     5    20     0      15       10      10     0     0     0"
+    w-multi3="    0     0     0     0       0        0       0     0     0     0" 
+          w4="   30     5    20     0      15       10      10     0     0     0"
+    w-multi4="    0     0     0     0       0        0       0     0     0     0" 
+          w5="   10    13    13    36      20        1       4     1     2     0"
+    w-multi5="    0     0     0     0       0        0       0     0     0     0" 
+          wd="   30     5    20     0      15       10      10     0     0     0"
+    w-multid="    0     0     0     0       0        0       0     0     0     0"    />
+    
+  <end25  w1="   30     5    20     0      15       10      10     0     0     0"
+    w-multi1="    0     0     0     0       0        0       0     0     0     0" 
+          w2="   30     5    20     0      15       10      10     0     0     0"
+    w-multi2="    0     0     0     0       0        0       0     0     0     0"
+          w3="   30     5    20     0      15       10      10     0     0     0"
+    w-multi3="    0     0     0     0       0        0       0     0     0     0" 
+          w4="   30     5    20     0      15       10      10     0     0     0"
+    w-multi4="    0     0     0     0       0        0       0     0     0     0" 
+          w5="   12    11    10    45      20        0       0     0     2     0"
+    w-multi5="    0     0     0     0       0        0       0     0     0     0" 
+          wd="   30     5    20     0      15       10      10     0     0     0"
+    w-multid="    0     0     0     0       0        0       0     0     0     0"    />
+    
+  <last   w1="   30     5    20     0      15       10      10     0     0     0"
+    w-multi1="    0     0     0     0       0        0       0     0     0     0" 
+          w2="   30     5    20     0      15       10      10     0     0     0"
+    w-multi2="    0     0     0     0       0        0       0     0     0     0"
+          w3="   98     1     0     0       1        0       0     0     0     0"
+    w-multi3="    0     0     0     0       0        0       0     0     0     0" 
+          w4="   30     5    20     0      15       10      10     0     0     0"
+    w-multi4="    0     0     0     0       0        0       0     0     0     0" 
+          w5="    6    11     9    54      12        0       0     0     8     0"
+    w-multi5="    0     0     0     0       0        0       0     0     0     0" 
+          wd="   30     5    20     0      15       10      10     0     0     0"
+    w-multid="    0     0     0     0       0        0       0     0     0     0"    />
+  <battle w="    10    30    60     0       0       10      30     0     0     0"
+    w-multi="     0     0     5     0       0        0       0     0     0     0"    />
+  <tuto   w="     0     0     0     0       0        0       0     0     0     0"
+    w-multi="     0     0   100     0       0        0       0     0     0     0"    />
 
     
 </powerup>
-
