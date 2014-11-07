@@ -296,6 +296,7 @@ void PowerupManager::loadWeights(const XMLNode &root,
  */
 void PowerupManager::updateWeightsForRace(unsigned int num_karts)
 {
+    loadAllPowerups(num_kart);
     m_position_to_class.clear();
     // In battle mode no positions exist, so use only position 1
     unsigned int end_position = (race_manager->isBattleMode()) ? 1 : num_karts;
