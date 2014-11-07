@@ -110,7 +110,7 @@ PowerupManager::PowerupType
 /** Loads all powerups from the powerup.xml file.
  *  Uses num_karts to get the good weights
  */
-void PowerupManager::loadAllPowerups(unsigned int num_karts=10)
+void PowerupManager::loadAllPowerups(unsigned int num_karts)
 {
     const std::string file_name = file_manager->getAsset("powerup.xml");
     XMLNode *root               = file_manager->createXMLTree(file_name);
@@ -236,7 +236,7 @@ void PowerupManager::loadWeights(const XMLNode &root,
         {
             Log::error("[PowerupManager]","No class of weights found"
                        "for %d karts - probabilities will be incorrect",
-                       num_karts)
+                       num_karts);
         }
         w = w + w_add;
     }//w is changed to associate with an arbitrary class of kart numbers
@@ -296,7 +296,7 @@ void PowerupManager::loadWeights(const XMLNode &root,
  */
 void PowerupManager::updateWeightsForRace(unsigned int num_karts)
 {
-    loadAllPowerups(num_kart);
+    loadAllPowerups(num_karts);
     m_position_to_class.clear();
     // In battle mode no positions exist, so use only position 1
     unsigned int end_position = (race_manager->isBattleMode()) ? 1 : num_karts;
