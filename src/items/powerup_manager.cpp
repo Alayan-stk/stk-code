@@ -239,6 +239,7 @@ void PowerupManager::loadWeights(const XMLNode &root,
                        num_karts);
         }
         w = w + w_add;
+        w_multi = w_multi + w_add;
     }//w is changed to associate with an arbitrary class of kart numbers
     
     if(node) node->get(w,       &s      );
