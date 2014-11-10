@@ -238,6 +238,10 @@ void PowerupManager::loadWeights(const XMLNode &root,
                        "for %d karts - probabilities will be incorrect",
                        num_karts);
         }
+        if(race_manager->isFollowMode())
+        {
+            w_add = "f";    
+        }
         if(w_add="")
         {
             w_add = "d";//fallback values
