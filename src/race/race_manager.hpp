@@ -633,6 +633,13 @@ public:
     }
 
     // ------------------------------------------------------------------------
+
+    bool isFollowMode()
+    {
+        return m_minor_mode == MINOR_MODE_FOLLOW_LEADER;
+    }
+
+    // ------------------------------------------------------------------------
     /** \brief Returns true if the current mode has laps. */
     bool modeHasLaps()
     {
