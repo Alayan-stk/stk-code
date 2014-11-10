@@ -98,7 +98,7 @@ public:
                         POSITION_END25,
                         POSITION_LAST,
                         POSITION_BATTLE_MODE,
-                        POSITION_FOLLOW_MODE
+                        POSITION_FOLLOW_MODE,
                         POSITION_TUTORIAL_MODE,
                         POSITION_COUNT};
 
