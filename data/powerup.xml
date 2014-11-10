@@ -100,6 +100,7 @@
        be quite rare, since otherwise the item might be used
        too often (compared with many items which will only
        affect a karts or two).
+       wf is used for follow the leader mode.
        WARNING : wd & w-multid are fallback values if things go
        wrong with ranges. Better avoid to change them, and do not
        delete them in any case                                              -->
