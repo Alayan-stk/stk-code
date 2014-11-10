@@ -127,7 +127,6 @@ Kart::Kart (const std::string& ident, unsigned int world_kart_id,
     m_flying               = false;
     m_sky_particles_emitter= NULL;
     m_stars_effect         = NULL;
-    m_jump_time            = 0;
     m_is_jumping           = false;
     m_min_nitro_time       = 0.0f;
     m_fire_clicked         = 0;
@@ -1329,17 +1328,18 @@ void Kart::update(float dt)
     // is rescued isOnGround might still be true, since the kart rigid
     // body was removed from the physics, but still retain the old
     // values for the raycasts).
-    if (!isOnGround())
+    if (!isOnGround() && !getKartAnimation())
     {
         const Material *m      = getMaterial();
         const Material *last_m = getLastMaterial();
 
         // A jump starts only the kart isn't already jumping, is on a new
         // (or no) texture.
-        if(!m_is_jumping && last_m && last_m!=m )
+        if (!m_is_jumping && last_m && last_m != m && 
+            m_kart_model->getAnimation() == KartModel::AF_DEFAULT)
         {
             float v = getVelocity().getY();
-            float force = World::getWorld()->getTrack()->getGravity();;
+            float force = World::getWorld()->getTrack()->getGravity();
             // Velocity / force is the time it takes to reach the peak
             // of the jump (i.e. when vertical speed becomes 0). Assuming
             // that jump start height and end height are the same, it will
@@ -1348,22 +1348,27 @@ void Kart::update(float dt)
 
             // Jump if either the jump is estimated to be long enough, or
             // the texture has the jump property set.
-            if(t>getKartProperties()->getJumpAnimationTime()  ||
-                last_m->isJumpTexture()                         )
+            if (t > getKartProperties()->getJumpAnimationTime() ||
+                last_m->isJumpTexture())
+            {
                 m_kart_model->setAnimation(KartModel::AF_JUMP_START);
+            }
+
             m_is_jumping = true;
         }
-        m_jump_time+=dt;
     }
     else if (m_is_jumping)
     {
         // Kart touched ground again
         m_is_jumping = false;
-        HitEffect *effect =  new Explosion(getXYZ(), "jump",
-                                          "jump_explosion.xml");
-        projectile_manager->addHitEffect(effect);
         m_kart_model->setAnimation(KartModel::AF_DEFAULT);
-        m_jump_time = 0;
+
+        if (!getKartAnimation())
+        {
+            HitEffect *effect =  new Explosion(getXYZ(), "jump",
+                                              "jump_explosion.xml");
+            projectile_manager->addHitEffect(effect);
+        }
     }
 
     //const bool dyn_shadows = World::getWorld()->getTrack()->hasShadows() &&
@@ -2135,18 +2140,20 @@ void Kart::updateEngineSFX()
     if(isOnGround())
     {
         float max_speed = m_max_speed->getCurrentMaxSpeed();
+        assert(max_speed>0);
         // Engine noise is based half in total speed, half in fake gears:
         // With a sawtooth graph like /|/|/| we get 3 even spaced gears,
         // ignoring the gear settings from stk_config, but providing a
         // good enough brrrBRRRbrrrBRRR sound effect. Speed factor makes
         // it a "staired sawtooth", so more acoustically rich.
-        float f = m_speed/max_speed;
+        float f = max_speed > 0 ? m_speed/max_speed : 1.0f;
         // Speed at this stage is not yet capped, so it can be > 1, which
         // results in odd engine sfx.
         if (f>1.0f) f=1.0f;
 
         float gears = 3.0f * fmod(f, 0.333334f);
-        m_engine_sound->setSpeed(0.6f + (f +gears)* 0.35f);
+        assert(!isnan(f));
+        m_engine_sound->setSpeed(0.6f + (f + gears) * 0.35f);
     }
     else
     {
@@ -2576,6 +2583,45 @@ void Kart::updateGraphics(float dt, const Vec3& offset_xyz,
     float xx = fabsf(m_speed)* getKartProperties()->getDownwardImpulseFactor()*0.0006f;
     Vec3 center_shift = Vec3(0, m_skidding->getGraphicalJumpOffset()
                               + lean_height +m_graphical_y_offset+xx, 0);
+    
+    // Try to prevent the graphical chassis to be inside of the terrain:
+    if(m_kart_properties->getPreventChassisInTerrain())
+    {
+        // Get the shortest suspension length (=closest point to terrain).
+        float min_susp_len = 99.9f;
+        for (int i = 0; i < getVehicle()->getNumWheels(); i++)
+        {
+            float susp_len = getVehicle()->getWheelInfo(i).m_raycastInfo
+                                                          .m_suspensionLength;
+            if (susp_len < min_susp_len)
+                min_susp_len = susp_len;
+        }   // for i<num_wheels
+
+        const btWheelInfo &w = getVehicle()->getWheelInfo(0);
+        // Recompute the default average suspension length, see 
+        // kartIsInRestNow() how to get from y-offset to susp. len.
+        float av_sus_len = -m_graphical_y_offset
+                         + w.m_chassisConnectionPointCS.getY()
+                         - w.m_wheelsRadius;
+
+        float delta = av_sus_len - min_susp_len;
+        // If the suspension length is so short, that it is less than the 
+        // lowest point of the kart, it indicates that the graphical chassis
+        // would be inside of the track:
+        if (delta > m_kart_model->getLowestPoint())
+        {
+            center_shift.setY(center_shift.getY() + delta - m_kart_model->getLowestPoint());
+        }
+
+        // FIXME: for now, debug output in case we have to debug it
+        //Log::verbose("kart", "min %f y off %f overall off %f lowest %f delta %f asl %f",
+        //    min_susp_len, m_graphical_y_offset, center_shift.getY(),
+        //    m_kart_model->getLowestPoint(),
+        //    delta,
+        //    av_sus_len
+        //    );
+    }
+
     center_shift = getTrans().getBasis() * center_shift;
 
     Moveable::updateGraphics(dt, center_shift,

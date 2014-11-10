@@ -377,9 +377,10 @@ public:
     BloomBlendShader();
 };
 
-class ToneMapShader : public ShaderHelperSingleton<ToneMapShader>, public TextureRead<Nearest_Filtered>
+class ToneMapShader : public ShaderHelperSingleton<ToneMapShader, float>, public TextureRead<Nearest_Filtered>
 {
 public:
+
     ToneMapShader();
 };
 
@@ -401,7 +402,7 @@ public:
     EnvMapShader();
 };
 
-class ShadowedSunLightShader : public ShaderHelperSingleton<ShadowedSunLightShader, core::vector3df, video::SColorf>, public TextureRead<Nearest_Filtered, Nearest_Filtered, Shadow_Sampler>
+class ShadowedSunLightShader : public ShaderHelperSingleton<ShadowedSunLightShader, float, float, float, float, core::vector3df, video::SColorf>, public TextureRead<Nearest_Filtered, Nearest_Filtered, Shadow_Sampler>
 {
 public:
     ShadowedSunLightShader();
@@ -448,7 +449,7 @@ public:
     ComputeGaussian17TapHShader();
 };
 
-class Gaussian6HBlurShader : public ShaderHelperSingleton<Gaussian6HBlurShader, core::vector2df>, public TextureRead<Bilinear_Clamped_Filtered>
+class Gaussian6HBlurShader : public ShaderHelperSingleton<Gaussian6HBlurShader, core::vector2df, float>, public TextureRead<Bilinear_Clamped_Filtered>
 {
 public:
     Gaussian6HBlurShader();
@@ -475,7 +476,7 @@ public:
 };
 
 
-class Gaussian6VBlurShader : public ShaderHelperSingleton<Gaussian6VBlurShader, core::vector2df>, public TextureRead<Bilinear_Clamped_Filtered>
+class Gaussian6VBlurShader : public ShaderHelperSingleton<Gaussian6VBlurShader, core::vector2df, float>, public TextureRead<Bilinear_Clamped_Filtered>
 {
 public:
     Gaussian6VBlurShader();
@@ -508,6 +509,18 @@ class LinearizeDepthShader : public ShaderHelperSingleton<LinearizeDepthShader, 
 {
 public:
     LinearizeDepthShader();
+};
+
+class LightspaceBoundingBoxShader : public ShaderHelperSingleton<LightspaceBoundingBoxShader, core::matrix4, float, float, float, float>, public TextureRead < Nearest_Filtered >
+{
+public:
+    LightspaceBoundingBoxShader();
+};
+
+class DepthHistogramShader : public ShaderHelperSingleton<DepthHistogramShader>, public TextureRead <Nearest_Filtered>
+{
+public:
+    DepthHistogramShader();
 };
 
 class GlowShader : public ShaderHelperSingleton<GlowShader>, public TextureRead<Bilinear_Filtered>

@@ -282,6 +282,8 @@ void PostProcessing::renderSunlight()
   DrawFullScreenEffect<FullScreenShader::SunLightShader>(cb->getPosition(), video::SColorf(cb->getRed(), cb->getGreen(), cb->getBlue()));
 }
 
+extern float shadowSplit[5];
+
 void PostProcessing::renderShadowedSunlight(const std::vector<core::matrix4> &sun_ortho_matrix, GLuint depthtex)
 {
     SunLightProvider * const cb = (SunLightProvider *)irr_driver->getCallback(ES_SUNLIGHT);
@@ -292,7 +294,7 @@ void PostProcessing::renderShadowedSunlight(const std::vector<core::matrix4> &su
     glBlendEquation(GL_FUNC_ADD);
 
     FullScreenShader::ShadowedSunLightShader::getInstance()->SetTextureUnits(irr_driver->getRenderTargetTexture(RTT_NORMAL_AND_DEPTH), irr_driver->getDepthStencilTexture(), depthtex);
-    DrawFullScreenEffect<FullScreenShader::ShadowedSunLightShader>(cb->getPosition(), video::SColorf(cb->getRed(), cb->getGreen(), cb->getBlue()));
+    DrawFullScreenEffect<FullScreenShader::ShadowedSunLightShader>(shadowSplit[1], shadowSplit[2], shadowSplit[3], shadowSplit[4], cb->getPosition(), video::SColorf(cb->getRed(), cb->getGreen(), cb->getBlue()));
 }
 
 
@@ -325,15 +327,15 @@ void PostProcessing::renderGaussian6BlurLayer(FrameBuffer &in_fbo)
         glGenTextures(1, &LayerTex);
         glTextureView(LayerTex, GL_TEXTURE_2D, in_fbo.getRTT()[0], GL_R32F, 0, 1, i, 1);
         FullScreenShader::Gaussian6VBlurShader::getInstance()->SetTextureUnits(LayerTex);
-        DrawFullScreenEffect<FullScreenShader::Gaussian6VBlurShader>(core::vector2df(1. / 1024., 1. / 1024.));
+        DrawFullScreenEffect<FullScreenShader::Gaussian6VBlurShader>(core::vector2df(1. / 1024., 1. / 1024.), 1.);
         in_fbo.BindLayer(i);
         FullScreenShader::Gaussian6HBlurShader::getInstance()->SetTextureUnits(irr_driver->getFBO(FBO_BLOOM_1024).getRTT()[0]);
-        DrawFullScreenEffect<FullScreenShader::Gaussian6HBlurShader>(core::vector2df(1. / 1024., 1. / 1024.));
+        DrawFullScreenEffect<FullScreenShader::Gaussian6HBlurShader>(core::vector2df(1. / 1024., 1. / 1024.), 1.);
         glDeleteTextures(1, &LayerTex);
     }
 }
 
-void PostProcessing::renderGaussian6Blur(FrameBuffer &in_fbo, FrameBuffer &auxiliary)
+void PostProcessing::renderGaussian6Blur(FrameBuffer &in_fbo, FrameBuffer &auxiliary, float sigmaV, float sigmaH)
 {
     assert(in_fbo.getWidth() == auxiliary.getWidth() && in_fbo.getHeight() == auxiliary.getHeight());
     float inv_width = 1.0f / in_fbo.getWidth(), inv_height = 1.0f / in_fbo.getHeight();
@@ -341,13 +343,13 @@ void PostProcessing::renderGaussian6Blur(FrameBuffer &in_fbo, FrameBuffer &auxil
         auxiliary.Bind();
 
         FullScreenShader::Gaussian6VBlurShader::getInstance()->SetTextureUnits(in_fbo.getRTT()[0]);
-        DrawFullScreenEffect<FullScreenShader::Gaussian6VBlurShader>(core::vector2df(inv_width, inv_height));
+        DrawFullScreenEffect<FullScreenShader::Gaussian6VBlurShader>(core::vector2df(inv_width, inv_height), sigmaV);
     }
     {
         in_fbo.Bind();
 
         FullScreenShader::Gaussian6HBlurShader::getInstance()->SetTextureUnits(auxiliary.getRTT()[0]);
-        DrawFullScreenEffect<FullScreenShader::Gaussian6HBlurShader>(core::vector2df(inv_width, inv_height));
+        DrawFullScreenEffect<FullScreenShader::Gaussian6HBlurShader>(core::vector2df(inv_width, inv_height), sigmaH);
     }
 }
 
@@ -451,6 +453,7 @@ void PostProcessing::renderSSAO()
     DrawFullScreenEffect<FullScreenShader::SSAOShader>(irr_driver->getSSAORadius(), irr_driver->getSSAOK(), irr_driver->getSSAOSigma());
 }
 
+
 void PostProcessing::renderFog()
 {
     const Track * const track = World::getWorld()->getTrack();
@@ -470,7 +473,7 @@ void PostProcessing::renderFog()
     glDisable(GL_DEPTH_TEST);
     glEnable(GL_BLEND);
     glBlendEquation(GL_FUNC_ADD);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glBlendFunc(GL_ONE, GL_ONE);
 
 
     FullScreenShader::FogShader::getInstance()->SetTextureUnits(irr_driver->getDepthStencilTexture());
@@ -535,11 +538,11 @@ static void renderGodRay(GLuint tex, const core::vector2df &sunpos)
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 }
 
-static void toneMap(FrameBuffer &fbo, GLuint rtt)
+static void toneMap(FrameBuffer &fbo, GLuint rtt, float vignette_weight)
 {
     fbo.Bind();
     FullScreenShader::ToneMapShader::getInstance()->SetTextureUnits(rtt);
-    DrawFullScreenEffect<FullScreenShader::ToneMapShader>();
+    DrawFullScreenEffect<FullScreenShader::ToneMapShader>(vignette_weight);
 }
 
 static void renderDoF(FrameBuffer &fbo, GLuint rtt)
@@ -712,11 +715,11 @@ FrameBuffer *PostProcessing::render(scene::ICameraSceneNode * const camnode, boo
             FrameBuffer::Blit(irr_driver->getFBO(FBO_BLOOM_256), irr_driver->getFBO(FBO_BLOOM_128), GL_COLOR_BUFFER_BIT, GL_LINEAR);
 
             // Blur
-            renderGaussian6Blur(irr_driver->getFBO(FBO_BLOOM_512), irr_driver->getFBO(FBO_TMP_512));
+            renderGaussian6Blur(irr_driver->getFBO(FBO_BLOOM_512), irr_driver->getFBO(FBO_TMP_512), 1., 1.);
 
-            renderGaussian6Blur(irr_driver->getFBO(FBO_BLOOM_256), irr_driver->getFBO(FBO_TMP_256));
+            renderGaussian6Blur(irr_driver->getFBO(FBO_BLOOM_256), irr_driver->getFBO(FBO_TMP_256), 1., 1.);
 
-            renderGaussian6Blur(irr_driver->getFBO(FBO_BLOOM_128), irr_driver->getFBO(FBO_TMP_128));
+            renderGaussian6Blur(irr_driver->getFBO(FBO_BLOOM_128), irr_driver->getFBO(FBO_TMP_128), 1., 1.);
 
             // Additively blend on top of tmp1
             in_fbo->Bind();
@@ -737,7 +740,15 @@ FrameBuffer *PostProcessing::render(scene::ICameraSceneNode * const camnode, boo
     {
         PROFILER_PUSH_CPU_MARKER("- Tonemap", 0xFF, 0x00, 0x00);
         ScopedGPUTimer Timer(irr_driver->getGPUTimer(Q_TONEMAP));
-        toneMap(*out_fbo, in_fbo->getRTT()[0]);
+		// only enable vignette during race
+		if(isRace)
+		{
+			toneMap(*out_fbo, in_fbo->getRTT()[0], 1.0);
+		}
+		else
+		{
+			toneMap(*out_fbo, in_fbo->getRTT()[0], 0.0);
+		}
         std::swap(in_fbo, out_fbo);
         PROFILER_POP_CPU_MARKER();
     }
