@@ -99,7 +99,10 @@
        'Global' items which affect all karts (switch) should
        be quite rare, since otherwise the item might be used
        too often (compared with many items which will only
-       affect a karts or two).                                -->
+       affect a karts or two).
+       WARNING : wd & w-multid are fallback values if things go
+       wrong with ranges. Better avoid to change them, and do not
+       delete them in any case                                              -->
   <!--      bubble  cake  bowl  zipper  plunger  switch swattr rubber para  anvil -->
   <first  w1="   30     5    20     0      15       10      10     0     0     0"
     w-multi1="    0     0     0     0       0        0       0     0     0     0" 
