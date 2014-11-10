@@ -242,13 +242,12 @@ void PowerupManager::loadWeights(const XMLNode &root,
         {
             w_add = "f";    
         }
-        if(w_add="")
+        if(w_add=="")
         {
             w_add = "d";//fallback values
             Log::warn("[PowerupManager]","powerup.xml do not support"
                       "%d karts - fallback probabilities will be used",
-                      num_karts)
-        }
+                      num_karts);
         }
         w = w + w_add;
         w_multi = w_multi + w_add;
