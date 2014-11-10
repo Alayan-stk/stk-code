@@ -238,6 +238,14 @@ void PowerupManager::loadWeights(const XMLNode &root,
                        "for %d karts - probabilities will be incorrect",
                        num_karts);
         }
+        if(w_add="")
+        {
+            w_add = "d";//fallback values
+            Log::warn("[PowerupManager]","powerup.xml do not support"
+                      "%d karts - fallback probabilities will be used",
+                      num_karts)
+        }
+        }
         w = w + w_add;
         w_multi = w_multi + w_add;
     }//w is changed to associate with an arbitrary class of kart numbers
