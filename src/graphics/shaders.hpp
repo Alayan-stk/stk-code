@@ -328,6 +328,14 @@ namespace LightShader
         GLuint vao;
         PointLightShader();
     };
+
+    class PointLightScatterShader : public ShaderHelperSingleton<PointLightScatterShader, float, core::vector3df>, public TextureRead<Nearest_Filtered>
+    {
+    public:
+        GLuint vbo;
+        GLuint vao;
+        PointLightScatterShader();
+    };
 }
 
 namespace ParticleShader
@@ -376,6 +384,13 @@ class BloomBlendShader : public ShaderHelperSingleton<BloomBlendShader>, public 
 public:
     BloomBlendShader();
 };
+
+class LensBlendShader : public ShaderHelperSingleton<LensBlendShader>, public TextureRead<Bilinear_Filtered, Bilinear_Filtered, Bilinear_Filtered>
+{
+public:
+    LensBlendShader();
+};
+
 
 class ToneMapShader : public ShaderHelperSingleton<ToneMapShader, float>, public TextureRead<Nearest_Filtered>
 {
@@ -453,6 +468,12 @@ class Gaussian6HBlurShader : public ShaderHelperSingleton<Gaussian6HBlurShader, 
 {
 public:
     Gaussian6HBlurShader();
+};
+
+class HorizontalBlurShader : public ShaderHelperSingleton<HorizontalBlurShader, core::vector2df>, public TextureRead<Bilinear_Clamped_Filtered>
+{
+public:
+    HorizontalBlurShader();
 };
 
 class Gaussian3HBlurShader : public ShaderHelperSingleton<Gaussian3HBlurShader, core::vector2df>, public TextureRead<Bilinear_Clamped_Filtered>
@@ -537,7 +558,7 @@ public:
     SSAOShader();
 };
 
-class FogShader : public ShaderHelperSingleton<FogShader, float, float, float, float, float, core::vector3df>, public TextureRead<Nearest_Filtered>
+class FogShader : public ShaderHelperSingleton<FogShader, float, core::vector3df>, public TextureRead<Nearest_Filtered>
 {
 public:
     FogShader();
