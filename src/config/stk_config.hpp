@@ -174,6 +174,7 @@ public:
     void load             (const std::string &filename);
     const std::string &getMainMenuPicture(int n);
     const std::string &getBackgroundPicture(int n);
+    /** Return true if GP scores should use XML rules, false otherwise */
     bool getScores();
     void  getAllScores(std::vector<int> *all_scores, int num_karts);
     // ------------------------------------------------------------------------
