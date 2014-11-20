@@ -403,8 +403,16 @@ void RaceManager::startNextRace()
 {
     // Uncomment to debug audio leaks
     // sfx_manager->dump();
-
-    stk_config->getAllScores(&m_score_for_position, m_num_karts);
+    
+    //keep option to manually define scores in stk_config.xml
+    if(stk_config->getScores)
+    {
+        stk_config->getAllScores(&m_score_for_position, m_num_karts);
+    }
+    else
+    {
+        GrandPrixManager->GetAllScores(&m_score_for_position, m_num_karts);   
+    }
     IrrlichtDevice* device = irr_driver->getDevice();
     GUIEngine::renderLoading();
     device->getVideoDriver()->endScene();
