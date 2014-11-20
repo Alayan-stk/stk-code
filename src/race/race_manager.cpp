@@ -411,7 +411,7 @@ void RaceManager::startNextRace()
     }
     else
     {
-        GrandPrixManager->GetAllScores(&m_score_for_position, m_num_karts);   
+        GrandPrixManager->getAllScores(&m_score_for_position, m_num_karts);   
     }
     IrrlichtDevice* device = irr_driver->getDevice();
     GUIEngine::renderLoading();
