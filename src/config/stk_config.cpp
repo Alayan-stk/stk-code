@@ -104,10 +104,6 @@ void STKConfig::load(const std::string &filename)
                    strA,filename.c_str());              \
     }
 
-    if(m_score_increase.size()==0 || (int)m_score_increase.size()!=m_max_karts)
-    {
-        Log::fatal("StkConfig", "Not or not enough scores defined in stk_config");
-    }
     if(m_leader_intervals.size()==0)
     {
         Log::fatal("StkConfig", "No follow leader interval(s) defined in stk_config");
@@ -194,6 +190,7 @@ void STKConfig::init_defaults()
     m_ai_acceleration            = 1.0f;
     m_disable_steer_while_unskid = false;
     m_camera_follow_skid         = false;
+    m_scores_from_xml            = false;
 
     m_score_increase.clear();
     m_leader_intervals.clear();
@@ -225,25 +222,36 @@ void STKConfig::getAllData(const XMLNode * root)
 
     if(const XMLNode *gp_node = root->getNode("grand-prix"))
     {
-        for(unsigned int i=0; i<gp_node->getNumNodes(); i++)
+        if(gp_node!=NULL)
         {
-            const XMLNode *pn=gp_node->getNode(i);
-            int from=-1;
-            pn->get("from", &from);
-            int to=-1;
-            pn->get("to", &to);
-            if(to<0) to=m_max_karts;
-            int points=-1;
-            pn->get("points", &points);
-            if(points<0 || from<0 || from>to||
-               (int)m_score_increase.size()!=from-1)
+            std::string scoresFromXML;
+            gp_node->get("default_distribution", &scoresFromXML);
+            
+            if(scoresFromXML="true")
             {
-                Log::error("StkConfig", "Incorrect GP point specification:");
-                Log::fatal("StkConfig", "from: %d  to: %d  points: %d",
-                        from, to, points);
+                m_scores_from_xml=true;
+                for(unsigned int i=0; i<gp_node->getNumNodes(); i++)
+                {
+                    const XMLNode *pn=gp_node->getNode(i);
+                    int from=-1;
+                    pn->get("from", &from);
+                    int to=-1;
+                    pn->get("to", &to);
+                    if(to<0) to=m_max_karts;
+                    int points=-1;
+                    pn->get("points", &points);
+                    if(points<0 || from<0 || from>to||
+                    (int)m_score_increase.size()!=from-1)
+                    {
+                        Log::error("StkConfig", "Incorrect GP point specification:");
+                        Log::fatal("StkConfig", "from: %d  to: %d  points: %d",
+                                    from, to, points);
+                    }
+                    for(int j=from; j<=to; j++)
+                    m_score_increase.push_back(points);
+                }    
             }
-            for(int j=from; j<=to; j++)
-                m_score_increase.push_back(points);
+            
         }
     }
 
@@ -406,6 +414,11 @@ void STKConfig::getAllData(const XMLNode * root)
         m_player_difficulties[i]->getAllData(type);
     }
 }   // getAllData
+
+bool STKConfig::getScores()
+{
+    return m_scores_from_xml;
+}
 
 // ----------------------------------------------------------------------------
 /** Defines the points for each position for a race with a given number
