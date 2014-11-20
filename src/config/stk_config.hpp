@@ -155,6 +155,9 @@ public:
     /** A heading difference of more than that will trigger a new event to
      *  be generated. */
     float m_replay_delta_angle;
+    
+    /** True if xml data should be used for gp scores, false otherwise */
+    bool m_scores_from_xml;
 
 private:
     /** True if stk_config has been loaded. This is necessary if the
